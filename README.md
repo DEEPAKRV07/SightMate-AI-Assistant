@@ -32,15 +32,22 @@ Camera → YOLO Detection → Segmentation → Fusion Logic → Voice Feedback
 
 ---
 
-## 📱 Demo
-
-(Add your demo video link here)
-
----
-
 ## 📸 Screenshots
 
-(Add screenshots here)
+### 🎯 Object Detection
+![Object Detection](assets/screenshots/object_detection.png)
+
+### 🧭 Navigation
+![Navigation](assets/screenshots/navigation.png)
+
+### 📖 OCR
+![OCR](assets/screenshots/ocr.png)
+
+### 🎙️ Voice Assistant
+![Voice Assistant](assets/screenshots/voice.png)
+
+### 🎙️ Braille Keyboard
+![Braille](assets/screenshots/braille.png)
 
 ---
 
@@ -88,6 +95,6 @@ lib/
 
 ## 👨‍💻 Author
 
-Deepak R.V
-Gowtham S
-Harmithaa V
+Deepak R.V  
+Gowtham S  
+Harmithaa V  
