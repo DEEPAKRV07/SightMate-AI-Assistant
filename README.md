@@ -1,17 +1,93 @@
-# insight_modern
+# SightMate – AI Assistant for the Visually Impaired
 
-A new Flutter project.
+SightMate is an AI-powered mobile assistant designed to help visually impaired users navigate and interact with their surroundings using real-time computer vision and voice feedback.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🚀 Features
 
-A few resources to get you started if this is your first Flutter project:
+- 🎯 Real-time Object Detection (YOLOv8 TFLite)
+- 🧭 Smart Navigation using Segmentation + Fusion
+- 📖 OCR (Text Reading using ML Kit)
+- 🎙️ Voice Assistant (Command-based interaction)
+- ⠿ Braille Keyboard Input
+- 🌍 Language Translation
+- 🔋 System Info (Battery, Time, Location)
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🧠 How It Works
+
+Camera → YOLO Detection → Segmentation → Fusion Logic → Voice Feedback
+
+---
+
+## 🛠️ Tech Stack
+
+- Flutter (UI + App)
+- TensorFlow Lite (AI Models)
+- YOLOv8 (Object Detection)
+- Google ML Kit (OCR)
+- Dart (Core Logic)
+
+---
+
+## 📱 Demo
+
+(Add your demo video link here)
+
+---
+
+## 📸 Screenshots
+
+(Add screenshots here)
+
+---
+
+## 📂 Project Structure
+
+lib/
+├── core/
+├── features/
+│ ├── object_detection/
+│ ├── navigation/
+│ ├── ocr/
+│ ├── assistant/
+│ ├── braille/
+│ ├── system/
+│ ├── translation/
+
+
+---
+
+## 📈 Project Evolution
+
+- Phase 1: Basic Blind Assistance System
+- Phase 2: Added OCR and Voice
+- Phase 3 (Current): Full AI Assistant with Navigation + Braille + YOLO
+
+---
+
+## ⚙️ Setup Instructions
+
+1. Clone the repository: git clone https://github.com/DEEPAKRV07/SightMate-AI-Assistant.git
+2. Navigate to project: cd SightMate-AI-Assistant
+3. Install dependencies: flutter pub get
+4. Run the app: flutter run
+
+---
+
+## 💡 Future Improvements
+
+- GPS Navigation (Outdoor mode)
+- Depth Estimation for distance awareness
+- AI Chat Integration (Gemini / ChatGPT)
+- Emergency SOS feature
+
+---
+
+## 👨‍💻 Author
+
+Deepak R.V
+Gowtham S
+Harmithaa V
