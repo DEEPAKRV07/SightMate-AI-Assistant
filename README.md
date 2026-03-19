@@ -65,16 +65,16 @@ Camera → YOLO Detection → Segmentation → Fusion Logic → Voice Feedback
 
 ## 📂 Project Structure
 
-lib/
-├── core/
-├── features/
-│ ├── object_detection/
-│ ├── navigation/
-│ ├── ocr/
-│ ├── assistant/
-│ ├── braille/
-│ ├── system/
-│ ├── translation/
+lib/  
+├── core/  
+├── features/  
+│ ├── object_detection/  
+│ ├── navigation/  
+│ ├── ocr/  
+│ ├── assistant/  
+│ ├── braille/  
+│ ├── system/  
+│ ├── translation/  
 
 
 ---
