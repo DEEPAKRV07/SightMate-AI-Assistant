@@ -1,0 +1,59 @@
+name: sightmate
+description: "SightMate – AI Assistant for the Visually Impaired"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  flutter_tts: ^3.8.5
+  speech_to_text: ^7.3.0
+  permission_handler: ^11.3.1
+  intl: ^0.19.0
+  battery_plus: ^7.0.0
+  camera: ^0.10.5+9
+  tflite_flutter: ^0.12.1
+  image: ^4.1.7
+  audioplayers: ^5.2.1
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+
+  google_mlkit_text_recognition: ^0.15.1
+  google_mlkit_translation: ^0.13.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/models/yolov8n_320_int8.tflite
+    - assets/models/deeplabv3.tflite
+    - assets/models/labels.txt
+    - assets/sounds/beep.mp3
+    - assets/icons/sightmate_icon.png
+
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/sightmate_icon.png"
+  adaptive_icon_background: "#e6f7ff"
+  adaptive_icon_foreground: "assets/icons/sightmate_icon.png"
+
+flutter_native_splash:
+  color: "#e6f7ff"
+  image: assets/icons/sightmate_icon.png
+  android: true
+  ios: true

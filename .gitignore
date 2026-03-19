@@ -1,0 +1,80 @@
+# ================================
+# 🔹 FLUTTER / DART
+# ================================
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+
+# ================================
+# 🔹 ANDROID
+# ================================
+android/.gradle/
+android/app/build/
+android/local.properties
+*.keystore
+
+# ================================
+# 🔹 IOS
+# ================================
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# ================================
+# 🔹 WEB / DESKTOP BUILD
+# ================================
+build/
+linux/flutter/ephemeral/
+macos/Flutter/ephemeral/
+windows/flutter/ephemeral/
+
+# ================================
+# 🔹 IDE / EDITOR
+# ================================
+.idea/
+.vscode/
+*.iml
+
+# ================================
+# 🔹 LOGS & TEMP
+# ================================
+*.log
+*.tmp
+*.lock
+
+# ================================
+# 🔹 PYTHON / YOLO ENV
+# ================================
+yolo_env/
+venv/
+.env/
+
+# ================================
+# 🔹 ML MODELS (LARGE FILES)
+# ================================
+*.pt
+*.onnx
+
+# ================================
+# 🔹 OPTIONAL (IF MODELS ARE LARGE)
+# ================================
+# Uncomment if needed
+# *.tflite
+
+# ================================
+# 🔹 BACKUP / TEST FILES
+# ================================
+*_backup/
+backup/
+lib/object_detection_backup/
+
+# ================================
+# 🔹 OS FILES
+# ================================
+.DS_Store
+Thumbs.db
