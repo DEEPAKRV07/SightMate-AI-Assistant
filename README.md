@@ -32,37 +32,6 @@ Camera → YOLO Detection → Segmentation → Fusion Logic → Voice Feedback
 
 ---
 
-## 📸 Screenshots
-
-## 📸 Screenshots
-
-<table>
-  <tr>
-    <td align="center">
-      <b>Object Detection</b><br>
-      <img src="assets/screenshots/object_detection.png" width="200"/>
-    </td>
-    <td align="center">
-      <b>Navigation</b><br>
-      <img src="assets/screenshots/navigation.png" width="200"/>
-    </td>
-    <td align="center">
-      <b>OCR</b><br>
-      <img src="assets/screenshots/ocr.png" width="200"/>
-    </td>
-    <td align="center">
-      <b>Voice Assistant</b><br>
-      <img src="assets/screenshots/voice.png" width="200"/>
-    </td>
-    <td align="center">
-      <b>Braille</b><br>
-      <img src="assets/screenshots/braille.png" width="200"/>
-    </td>
-  </tr>
-</table>
-
----
-
 ## 📂 Project Structure
 
 lib/  
