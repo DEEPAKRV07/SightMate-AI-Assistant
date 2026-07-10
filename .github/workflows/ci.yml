@@ -161,7 +161,23 @@ jobs:
 
       # ── 9. Run Static Analysis ──────────────────────────────────────────────
       - name: Run Flutter Analyze
-        run: flutter analyze
+        run: flutter analyze 2>&1 | tee analyze_log.txt
+
+      - name: Parse and Annotate Analyze Errors
+        if: failure()
+        run: |
+          if [ -f analyze_log.txt ]; then
+            echo "=========================================================="
+            echo "Printing static analysis log..."
+            echo "=========================================================="
+            cat analyze_log.txt
+            echo "=========================================================="
+            echo "Generating error annotations..."
+            echo "=========================================================="
+            grep -i -E "error|warning" analyze_log.txt | head -n 30 | while read -r line; do
+              echo "::error::$line"
+            done
+          fi
 
       # ── 10. Build Debug Application ──────────────────────────────────────────
       # Compiles Flutter Dart and triggers native CMake C++ compilation.
