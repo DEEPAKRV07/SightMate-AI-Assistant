@@ -22,35 +22,26 @@ subprojects {
 }
 
 subprojects {
-    // Force Java 21 compatibility for all subprojects (plugins)
-    tasks.withType<JavaCompile>().configureEach {
-        sourceCompatibility = "21"
-        targetCompatibility = "21"
+    // Ignore :app because it evaluates eagerly due to evaluationDependsOn(":app")
+    if (project.name != "app") {
+        afterEvaluate {
+            project.extensions.findByType<com.android.build.gradle.BaseExtension>()?.let { ext ->
+                ext.compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_21
+                    targetCompatibility = JavaVersion.VERSION_21
+                }
+                if (ext is com.android.build.gradle.LibraryExtension) {
+                    ext.ndkVersion = "28.2.13676358"
+                }
+            }
+        }
     }
 
-    // Force Kotlin 21 compatibility for all subprojects (plugins)
-    tasks.withType<KotlinCompile>().configureEach {
+    // Force Kotlin tasks
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
-    }
-
-    // Force Java 21 and NDK version for all subprojects using AGP
-    plugins.withId("com.android.library") {
-        val android = extensions.getByType<com.android.build.gradle.BaseExtension>()
-        android.compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_21
-            targetCompatibility = JavaVersion.VERSION_21
-        }
-        android.ndkVersion = "28.2.13676358"
-    }
-    plugins.withId("com.android.application") {
-        val android = extensions.getByType<com.android.build.gradle.BaseExtension>()
-        android.compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_21
-            targetCompatibility = JavaVersion.VERSION_21
-        }
-        android.ndkVersion = "28.2.13676358"
     }
 }
 
