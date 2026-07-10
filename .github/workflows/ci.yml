@@ -200,6 +200,14 @@ jobs:
             done
           fi
 
+      - name: Locate Compiled APK
+        run: |
+          echo "=========================================================="
+          echo "Locating compiled APK files..."
+          echo "=========================================================="
+          find . -name "*.apk" -print
+          echo "=========================================================="
+
       # ── 11. Upload Compiled APK Artifact ────────────────────────────────────
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
