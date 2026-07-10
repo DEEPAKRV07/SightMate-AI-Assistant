@@ -182,34 +182,35 @@ jobs:
       # ── 10. Build Debug Application ──────────────────────────────────────────
       # Compiles Flutter Dart and triggers native CMake C++ compilation.
       - name: Build Debug Android APK
-        run: flutter build apk --debug --verbose 2>&1 | tee build_log.txt
-
-      - name: Parse and Annotate Build Errors
-        if: failure()
         run: |
-          if [ -f build_log.txt ]; then
-            echo "=========================================================="
-            echo "Printing last 100 lines of build log..."
-            echo "=========================================================="
-            tail -n 100 build_log.txt
+          set -o pipefail
+          flutter build apk --debug --verbose 2>&1 | tee build_log.txt
+
+      - name: Verify and Parse Build Results
+        if: always()
+        run: |
+          if [ ! -f build_log.txt ]; then
+            echo "::error::build_log.txt not found!"
+            exit 1
+          fi
+          
+          # Check if APK exists
+          apk_path=$(find build/app/outputs -name "*.apk" 2>/dev/null | head -n 1)
+          if [ -n "$apk_path" ]; then
+            echo "::notice::Successfully compiled APK at $apk_path"
+          else
+            echo "::error::No APK file found! Printing last 150 lines of build log..."
+            tail -n 150 build_log.txt
+            
+            # Print annotations for error lines to make them queryable via API
             echo "=========================================================="
             echo "Generating error annotations..."
             echo "=========================================================="
             grep -i -E "error|failed|exception" build_log.txt | head -n 30 | while read -r line; do
               echo "::error::$line"
             done
+            exit 1
           fi
-
-      - name: Locate Compiled APK
-        run: |
-          echo "=========================================================="
-          echo "Locating compiled APK files..."
-          echo "=========================================================="
-          find . -name "*.apk" | while read -r apk_path; do
-            echo "Found APK: $apk_path"
-            echo "::warning::Found APK at $apk_path"
-          done
-          echo "=========================================================="
 
       # ── 11. Upload Compiled APK Artifact ────────────────────────────────────
       - name: Upload Debug APK Artifact
