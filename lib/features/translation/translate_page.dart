@@ -34,7 +34,7 @@ class _TranslatePageState extends State<TranslatePage> {
   Future<void> _initializeTranslator() async {
     print("[TRANSLATE] Initializing...");
 
-    await TTSService.speak("Preparing translator.");
+    await TTSService().speak("Preparing translator.");
 
     await _translate.init(
       source: TranslateLanguage.english,
@@ -43,7 +43,7 @@ class _TranslatePageState extends State<TranslatePage> {
 
     _translatorReady = true;
 
-    await TTSService.speak(
+    await TTSService().speak(
         "Translation mode ready. Tap once to speak. Double tap to repeat. Swipe down to exit.");
 
     print("[TRANSLATE] Ready");
@@ -61,7 +61,7 @@ class _TranslatePageState extends State<TranslatePage> {
     _listening = true;
     setState(() {});
 
-    await TTSService.stop(); // stop any ongoing speech
+    await TTSService().stop(); // stop any ongoing speech
 
     final spoken = await _speech.listenOnce();
 
@@ -71,7 +71,7 @@ class _TranslatePageState extends State<TranslatePage> {
     if (!_pageActive) return;
 
     if (spoken == null || spoken.trim().isEmpty) {
-      await TTSService.speak("No speech detected.");
+      await TTSService().speak("No speech detected.");
       return;
     }
 
@@ -84,7 +84,7 @@ class _TranslatePageState extends State<TranslatePage> {
 
     print("[TRANSLATE] Translated: $translated");
 
-    await TTSService.speak(translated);
+    await TTSService().speak(translated);
   }
 
   // ---------------------------------------------------
@@ -92,9 +92,9 @@ class _TranslatePageState extends State<TranslatePage> {
   // ---------------------------------------------------
   Future<void> _repeat() async {
     if (_lastTranslated.isNotEmpty) {
-      await TTSService.speak(_lastTranslated);
+      await TTSService().speak(_lastTranslated);
     } else {
-      await TTSService.speak("Nothing to repeat.");
+      await TTSService().speak("Nothing to repeat.");
     }
   }
 
@@ -108,7 +108,7 @@ class _TranslatePageState extends State<TranslatePage> {
     _listening = false;
 
     await _speech.stop();
-    await TTSService.stop();
+    await TTSService().stop();
 
     Navigator.pop(context);
   }

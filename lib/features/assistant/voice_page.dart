@@ -23,18 +23,18 @@ class _VoicePageState extends State<VoicePage> {
     if (command.contains("battery")) {
       final level = await _battery.getBatteryLevel();
 
-      await TTSService.speak("Battery level is $level percent");
+      await TTSService().speak("Battery level is $level percent");
     }
     else if (command.contains("time")) {
       final time = DateFormat('hh:mm a').format(DateTime.now());
-      await TTSService.speak("Current time is $time");
+      await TTSService().speak("Current time is $time");
     }
     else if (command.contains("date")) {
       final date = DateFormat('EEEE, MMMM d').format(DateTime.now());
-      await TTSService.speak("Today is $date");
+      await TTSService().speak("Today is $date");
     }
     else {
-      await TTSService.speak("Command not recognized");
+      await TTSService().speak("Command not recognized");
     }
   }
 

@@ -53,29 +53,34 @@ class BrailleChordEngine {
     // Double presses (2 keys)
     'UU'     : 'b',
     'DD'     : 'i',
-    'DU'     : 'c',   // UD and DU both sort to 'DU' after normalization
+    'DU'     : 'c',   // UD and DU both map to 'c' for order-independence
+    'UD'     : 'c',
 
     // Triple presses (3 keys)
-    'DUU'    : 'd',   // sorted: D+U+U
-    'DDU'    : 'f',   // sorted: D+D+U
+    'DUU'    : 'd',   // All permutations map to 'd'
+    'UDU'    : 'd',
+    'UUD'    : 'd',
+    'DDU'    : 'f',   // All permutations map to 'f'
+    'DUD'    : 'f',
+    'UDD'    : 'f',
     'UUU'    : 'g',
     'DDD'    : 'h',
 
-    // Quad presses (4 keys)
+    // Quad presses (4 keys - unique literal combinations)
     'DDUU'   : 'j',
     'DDDU'   : 'k',
     'DUUU'   : 'l',
-    'DDUU'   : 'm',   // intentional duplicate → last wins → use unique combos
-    'DUUU'   : 'n',
+    'UDDU'   : 'm',   // Unique combination for m
+    'UDUU'   : 'n',   // Unique combination for n
     'UUUU'   : 'o',
     'DDDD'   : 'p',
-    'DUUD'   : 'q',   // sorted: D+D+U+U — already 'DDUU', use DUUD literal
-    'UUUD'   : 'r',   // sorted: D+U+U+U
-    'DDUD'   : 's',   // sorted: D+D+D+U — already 'DDDU', use DDUD literal
-    'DUDD'   : 't',
-    'UDDD'   : 'u',
-    'UUDD'   : 'v',
-    'DUUU'   : 'w',
+    'DUUD'   : 'q',   // Unique combination for q
+    'UUUD'   : 'r',   // Unique combination for r
+    'DDUD'   : 's',   // Unique combination for s
+    'DUDD'   : 't',   // Unique combination for t
+    'UDDD'   : 'u',   // Unique combination for u
+    'UUDD'   : 'v',   // Unique combination for v
+    'UUDU'   : 'w',   // Unique combination for w
 
     // Control chords (5+ keys — clearly distinguishable)
     'UUUUU'  : ' ',   // Space
@@ -111,10 +116,9 @@ class BrailleChordEngine {
   void _flushChord() {
     if (_buffer.isEmpty) return;
 
-    // Build chord code string — normalize by sorting for order-independence
+    // Build chord code string from the sequence of keys pressed
     final rawCode  = _buffer.map((e) => e == SwitchEvent.up ? 'U' : 'D').toList();
-    final sorted   = List<String>.from(rawCode)..sort();
-    final code     = sorted.join();
+    final code     = rawCode.join();
     _buffer.clear();
 
     final character = _rawChordMap[code];

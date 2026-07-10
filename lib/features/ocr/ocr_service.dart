@@ -90,7 +90,9 @@ class OCRService {
       final cleaned = _cleanText(recognized.text);
       return cleaned.isEmpty ? null : _applyDedup(cleaned);
     } finally {
-      await tempFile.delete().catchError((_) {});
+      try {
+        await tempFile.delete();
+      } catch (_) {}
     }
   }
 
