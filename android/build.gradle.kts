@@ -30,8 +30,8 @@ subprojects {
 
     // Force Kotlin 21 compatibility for all subprojects (plugins)
     tasks.withType<KotlinCompile>().configureEach {
-        kotlinOptions {
-            jvmTarget = "21"
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
     }
 
