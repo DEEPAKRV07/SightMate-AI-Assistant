@@ -161,7 +161,7 @@ jobs:
 
       # ── 9. Run Static Analysis ──────────────────────────────────────────────
       - name: Run Flutter Analyze
-        run: flutter analyze || true
+        run: flutter analyze
 
       # ── 10. Build Debug Application ──────────────────────────────────────────
       # Compiles Flutter Dart and triggers native CMake C++ compilation.
@@ -189,5 +189,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: SightMate-Debug-APK
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: build/app/outputs/**/*.apk
           if-no-files-found: error
