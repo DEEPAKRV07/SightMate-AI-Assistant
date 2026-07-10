@@ -3,22 +3,24 @@
 #
 # Workflows performed:
 #   1. Validates presence of core asset model files (YOLOv8n-INT8, labels).
-#   2. Installs Java 17 (Zulu distribution).
-#   3. Installs Android SDK Command-line Tools.
-#   4. Installs the exact Android NDK (25.1.8937393) and CMake (3.22.1)
+#   2. Validates presence of PaddleOCR model files (since PaddleOCR is fully integrated).
+#   3. Installs Java 17 (Zulu distribution).
+#   4. Installs Android SDK Command-line Tools.
+#   5. Installs the exact Android NDK (25.1.8937393) and CMake (3.22.1)
 #      required by the CMake native build step.
-#   5. Caches Flutter SDK, Gradle dependencies, and Pub package cache.
-#   6. Installs pub dependencies and runs static analysis.
-#   7. Compiles the debug APK.
-#   8. Uploads the build output as a GitHub runner artifact.
+#   6. Caches Flutter SDK, Gradle dependencies, and Pub package cache.
+#   7. Installs pub dependencies and runs static analysis.
+#   8. Compiles the debug APK.
+#   9. Uploads the build output as a GitHub runner artifact.
 
 name: SightMate CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ '**' ] # Run automatically on pushes to ALL branches (including feature/*)
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master ] # Keep support for PRs targeting main and master
+  workflow_dispatch: # Enable manual triggers from GitHub Actions UI
 
 jobs:
   build:
@@ -30,8 +32,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # ── 2. Validate Project Asset Dependencies ──────────────────────────────
-      # Ensure large model assets are committed or fail early with guidance.
+      # ── 2. Validate Gradle Wrapper ──────────────────────────────────────────
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v3
+
+      # ── 3. Validate Project Asset Dependencies ──────────────────────────────
+      # Ensure required model assets are committed, and check PaddleOCR ONNX models.
       - name: Validate Model and Asset Dependencies
         run: |
           echo "=========================================================="
@@ -40,17 +46,46 @@ jobs:
           
           MISSING=0
           
+          # Core YOLO Obstacle Detection Model Validation
           if [ ! -f "assets/models/yolov8n_320_int8.tflite" ]; then
             echo "::error::[MISSING ASSET] assets/models/yolov8n_320_int8.tflite is missing."
-            echo "Diagnostic: The project requires this YOLOv8n INT8 quantized model for Module 1 object detection."
+            echo "Module Dependency: Module 1 (Reactive Edge Vision Pipeline)."
+            echo "Description: Quantized INT8 YOLOv8n model required for on-device obstacle detection."
             echo "Resolution: Download 'yolov8n_320_int8.tflite' and place it in the 'assets/models/' folder."
             MISSING=1
           fi
 
           if [ ! -f "assets/models/labels.txt" ]; then
             echo "::error::[MISSING ASSET] assets/models/labels.txt is missing."
-            echo "Diagnostic: This file contains the list of classes recognized by YOLOv8n."
-            echo "Resolution: Ensure 'labels.txt' is created or committed inside 'assets/models/'."
+            echo "Module Dependency: Module 1 (Reactive Edge Vision Pipeline)."
+            echo "Description: Contains the classification labels mapped to YOLOv8n outputs."
+            echo "Resolution: Create or place 'labels.txt' inside the 'assets/models/' folder."
+            MISSING=1
+          fi
+
+          # PaddleOCR Model Suite Validation
+          # Note: PaddleOCR is fully integrated into PaddleOCRService/PaddleOcrHelper, so these are checked.
+          if [ ! -f "assets/models/ch_PP-OCRv4_det_infer.onnx" ]; then
+            echo "::error::[MISSING ASSET] assets/models/ch_PP-OCRv4_det_infer.onnx is missing."
+            echo "Module Dependency: Module 2 (PaddleOCR Screen Reader DBNet text region detector)."
+            echo "Description: ONNX model for text detection."
+            echo "Resolution: Download 'ch_PP-OCRv4_det_infer.onnx' from the PaddleOCR model zoo and place it in 'assets/models/'."
+            MISSING=1
+          fi
+          
+          if [ ! -f "assets/models/ch_PP-OCRv4_rec_infer.onnx" ]; then
+            echo "::error::[MISSING ASSET] assets/models/ch_PP-OCRv4_rec_infer.onnx is missing."
+            echo "Module Dependency: Module 2 (PaddleOCR Screen Reader CRNN text recognizer)."
+            echo "Description: ONNX model for text recognition."
+            echo "Resolution: Download 'ch_PP-OCRv4_rec_infer.onnx' from the PaddleOCR model zoo and place it in 'assets/models/'."
+            MISSING=1
+          fi
+          
+          if [ ! -f "assets/models/ppocr_keys_v1.txt" ]; then
+            echo "::error::[MISSING ASSET] assets/models/ppocr_keys_v1.txt is missing."
+            echo "Module Dependency: Module 2 (PaddleOCR character vocabulary map)."
+            echo "Description: Contains character mapping keys for the CRNN recognizer output."
+            echo "Resolution: Download or create 'ppocr_keys_v1.txt' containing the character list and place it in 'assets/models/'."
             MISSING=1
           fi
 
@@ -61,7 +96,7 @@ jobs:
           
           echo "All required models and metadata labels are present."
 
-      # ── 3. Configure Java Environment ───────────────────────────────────────
+      # ── 4. Configure Java Environment ───────────────────────────────────────
       # Java 17 is required by kotlin-android and Gradle packaging plugins.
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -69,7 +104,7 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      # ── 4. Configure Android SDK & NDK ──────────────────────────────────────
+      # ── 5. Configure Android SDK & NDK ──────────────────────────────────────
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
@@ -86,16 +121,18 @@ jobs:
           
           echo "NDK and CMake installations complete."
 
-      # ── 5. Set up Flutter Environment ───────────────────────────────────────
+      # ── 6. Set up Flutter Environment ───────────────────────────────────────
+      # Pinned to Flutter 3.19.0 matching Dart SDK `>=3.3.0 <4.0.0`
       - name: Set up Flutter SDK
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.19.0'
           channel: 'stable'
           cache: true
           cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
           cache-path: "${{ runner.tool_cache }}/flutter"
 
-      # ── 6. Cache Pub Cache Dependencies ─────────────────────────────────────
+      # ── 7. Cache Pub Cache Dependencies ─────────────────────────────────────
       - name: Cache Dart Pub Cache
         uses: actions/cache@v4
         with:
@@ -104,27 +141,27 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pub-cache-
 
-      # ── 7. Restore Gradle Dependencies ──────────────────────────────────────
+      # ── 8. Restore Gradle Dependencies ──────────────────────────────────────
       # Automatically caches wrapper, dependencies, and configuration steps.
       - name: Setup Gradle Cache
         uses: gradle/actions/setup-gradle@v3
         with:
           cache-disabled: false
 
-      # ── 8. Install Project Dependencies ─────────────────────────────────────
+      # ── 9. Install Project Dependencies ─────────────────────────────────────
       - name: Install Flutter Dependencies
         run: flutter pub get
 
-      # ── 9. Run Static Analysis ──────────────────────────────────────────────
+      # ── 10. Run Static Analysis ──────────────────────────────────────────────
       - name: Run Flutter Analyze
         run: flutter analyze
 
-      # ── 10. Build Debug Application ──────────────────────────────────────────
+      # ── 11. Build Debug Application ──────────────────────────────────────────
       # Compiles Flutter Dart and triggers native CMake C++ compilation.
       - name: Build Debug Android APK
-        run: flutter build apk --debug
+        run: flutter build apk --debug --verbose
 
-      # ── 11. Upload Compiled APK Artifact ────────────────────────────────────
+      # ── 12. Upload Compiled APK Artifact ────────────────────────────────────
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
