@@ -3,7 +3,7 @@
 #
 # Workflows performed:
 #   1. Validates presence of core asset model files (YOLOv8n-INT8, labels).
-#   2. Validates presence of PaddleOCR model files (since PaddleOCR is fully integrated).
+#   2. Validates presence of optional PaddleOCR model files (issues warning on missing).
 #   3. Installs Java 17 (Zulu distribution).
 #   4. Installs Android SDK Command-line Tools.
 #   5. Installs the exact Android NDK (25.1.8937393) and CMake (3.22.1)
@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v4
 
       # ── 2. Validate Project Asset Dependencies ──────────────────────────────
-      # Ensure required model assets are committed, and check PaddleOCR ONNX models.
+      # Ensure required model assets are committed, and warn on missing optional PaddleOCR models.
       - name: Validate Model and Asset Dependencies
         run: |
           echo "=========================================================="
@@ -42,7 +42,7 @@ jobs:
           
           MISSING=0
           
-          # Core YOLO Obstacle Detection Model Validation
+          # Core YOLO Obstacle Detection Model Validation (Required)
           if [ ! -f "assets/models/yolov8n_320_int8.tflite" ]; then
             echo "::error::[MISSING ASSET] assets/models/yolov8n_320_int8.tflite is missing."
             echo "Module Dependency: Module 1 (Reactive Edge Vision Pipeline)."
@@ -59,38 +59,49 @@ jobs:
             MISSING=1
           fi
 
-          # PaddleOCR Model Suite Validation
-          # Note: PaddleOCR is fully integrated into PaddleOCRService/PaddleOcrHelper, so these are checked.
-          if [ ! -f "assets/models/ch_PP-OCRv4_det_infer.onnx" ]; then
-            echo "::error::[MISSING ASSET] assets/models/ch_PP-OCRv4_det_infer.onnx is missing."
-            echo "Module Dependency: Module 2 (PaddleOCR Screen Reader DBNet text region detector)."
-            echo "Description: ONNX model for text detection."
-            echo "Resolution: Download 'ch_PP-OCRv4_det_infer.onnx' from the PaddleOCR model zoo and place it in 'assets/models/'."
-            MISSING=1
-          fi
-          
-          if [ ! -f "assets/models/ch_PP-OCRv4_rec_infer.onnx" ]; then
-            echo "::error::[MISSING ASSET] assets/models/ch_PP-OCRv4_rec_infer.onnx is missing."
-            echo "Module Dependency: Module 2 (PaddleOCR Screen Reader CRNN text recognizer)."
-            echo "Description: ONNX model for text recognition."
-            echo "Resolution: Download 'ch_PP-OCRv4_rec_infer.onnx' from the PaddleOCR model zoo and place it in 'assets/models/'."
-            MISSING=1
-          fi
-          
-          if [ ! -f "assets/models/ppocr_keys_v1.txt" ]; then
-            echo "::error::[MISSING ASSET] assets/models/ppocr_keys_v1.txt is missing."
-            echo "Module Dependency: Module 2 (PaddleOCR character vocabulary map)."
-            echo "Description: Contains character mapping keys for the CRNN recognizer output."
-            echo "Resolution: Download or create 'ppocr_keys_v1.txt' containing the character list and place it in 'assets/models/'."
-            MISSING=1
-          fi
-
           if [ $MISSING -eq 1 ]; then
-            echo "Build terminated: Required asset files are missing from the repository."
+            echo "Build terminated: Required core vision model files are missing from the repository."
             exit 1
           fi
           
           echo "All required models and metadata labels are present."
+
+          echo "=========================================================="
+          echo "Checking for optional PaddleOCR model files..."
+          echo "=========================================================="
+          
+          MISSING_PADDLE=0
+          
+          # PaddleOCR Model Suite Validation (Optional, fallback to ML Kit is supported)
+          if [ ! -f "assets/models/ch_PP-OCRv4_det_infer.onnx" ]; then
+            echo "::warning::[OPTIONAL ASSET MISSING] assets/models/ch_PP-OCRv4_det_infer.onnx is missing."
+            echo "Module Dependency: Module 2 (PaddleOCR Screen Reader DBNet text region detector)."
+            echo "Description: ONNX model for text detection. If missing, the app will fall back to Google MLKit Text Recognition."
+            echo "Resolution: Download 'ch_PP-OCRv4_det_infer.onnx' from the PaddleOCR model zoo and place it in 'assets/models/'."
+            MISSING_PADDLE=1
+          fi
+          
+          if [ ! -f "assets/models/ch_PP-OCRv4_rec_infer.onnx" ]; then
+            echo "::warning::[OPTIONAL ASSET MISSING] assets/models/ch_PP-OCRv4_rec_infer.onnx is missing."
+            echo "Module Dependency: Module 2 (PaddleOCR Screen Reader CRNN text recognizer)."
+            echo "Description: ONNX model for text recognition. If missing, the app will fall back to Google MLKit Text Recognition."
+            echo "Resolution: Download 'ch_PP-OCRv4_rec_infer.onnx' from the PaddleOCR model zoo and place it in 'assets/models/'."
+            MISSING_PADDLE=1
+          fi
+          
+          if [ ! -f "assets/models/ppocr_keys_v1.txt" ]; then
+            echo "::warning::[OPTIONAL ASSET MISSING] assets/models/ppocr_keys_v1.txt is missing."
+            echo "Module Dependency: Module 2 (PaddleOCR character vocabulary map)."
+            echo "Description: Contains character mapping keys for the CRNN recognizer output. If missing, the app will fall back to Google MLKit Text Recognition."
+            echo "Resolution: Download or create 'ppocr_keys_v1.txt' containing the character list and place it in 'assets/models/'."
+            MISSING_PADDLE=1
+          fi
+
+          if [ $MISSING_PADDLE -eq 1 ]; then
+            echo "PaddleOCR assets are missing. The application will build successfully and fall back to Google ML Kit Text Recognition at runtime."
+          else
+            echo "All optional PaddleOCR model files are present."
+          fi
 
       # ── 3. Configure Java Environment ───────────────────────────────────────
       # Java 17 is required by kotlin-android and Gradle packaging plugins.
