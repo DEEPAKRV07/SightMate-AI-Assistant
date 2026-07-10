@@ -1,64 +1,52 @@
+// lib/features/navigation/navigation_fusion_service.dart
+// Navigation Fusion Service
+//
+// Originally fused YOLO detections + segmentation mask for path guidance.
+// Now fuses YOLO detections + H-Splitter zones for directional TTS narration.
+// Segmentation dependency removed.
+
+import '../object_detection/h_splitter.dart';
 import '../object_detection/yolo_service.dart';
 
+class PathGuidance {
+  final String instruction;
+  final bool   isUrgent;
+  const PathGuidance(this.instruction, {this.isUrgent = false});
+}
+
 class NavigationFusionService {
-  String decideNavigation(
-    List<DetectionResult> detections,
-    double segCenter,
-    double segLeft,
-    double segRight,
-  ) {
-    double leftDanger = segLeft;
-    double centerDanger = segCenter;
-    double rightDanger = segRight;
+  // Singleton
+  static final NavigationFusionService _instance =
+      NavigationFusionService._internal();
+  factory NavigationFusionService() => _instance;
+  NavigationFusionService._internal();
 
-    String objectName = "";
+  /// Generate a concise navigation instruction from zoned detections.
+  PathGuidance? generateInstruction({
+    required List<ZonedDetection> zoned,
+    required double frameWidth,
+    required double frameHeight,
+  }) {
+    final alerting = zoned.where((z) => z.shouldAlert).toList();
+    if (alerting.isEmpty) return null;
 
-    for (var d in detections) {
-      double x = d.rect.center.dx;
+    // Check if central path is blocked
+    final centralBlocked = alerting.any((z) => z.zone == SpatialZone.centralPath);
+    final leftBlocked    = alerting.any((z) => z.zone == SpatialZone.leftFlank);
+    final rightBlocked   = alerting.any((z) => z.zone == SpatialZone.rightFlank);
 
-      double danger = (d.rect.height * d.rect.height) * d.confidence;
-
-      if (d.rect.height < 0.10) continue;
-
-      if (x < 0.33) {
-        leftDanger += danger;
-      } else if (x < 0.66) {
-        centerDanger += danger;
-        objectName = d.label;
-      } else {
-        rightDanger += danger;
-      }
+    if (centralBlocked && !leftBlocked) {
+      return PathGuidance('Obstacle ahead, move left.', isUrgent: true);
+    } else if (centralBlocked && !rightBlocked) {
+      return PathGuidance('Obstacle ahead, move right.', isUrgent: true);
+    } else if (centralBlocked) {
+      return PathGuidance('Obstacle immediate front, stop.', isUrgent: true);
+    } else if (leftBlocked && !rightBlocked) {
+      return PathGuidance('Obstacle on left.', isUrgent: false);
+    } else if (rightBlocked && !leftBlocked) {
+      return PathGuidance('Obstacle on right.', isUrgent: false);
     }
 
-    print("[NAV] YOLO L:$leftDanger C:$centerDanger R:$rightDanger");
-    print("[NAV] SEG  L:$segLeft C:$segCenter R:$segRight");
-
-    /// MAIN OBSTACLE
-    if (centerDanger > 0.30) {
-      if (leftDanger < rightDanger && leftDanger < 0.20) {
-        return "Move left. $objectName ahead";
-      }
-
-      if (rightDanger < leftDanger && rightDanger < 0.20) {
-        return "Move right. $objectName ahead";
-      }
-
-      if (objectName.isNotEmpty) {
-        return "$objectName ahead";
-      }
-
-      return "Obstacle ahead";
-    }
-
-    /// SIDE OBSTACLES
-    if (leftDanger > 0.35 && rightDanger < 0.20) {
-      return "Move right";
-    }
-
-    if (rightDanger > 0.35 && leftDanger < 0.20) {
-      return "Move left";
-    }
-
-    return "Path clear";
+    return null;
   }
 }

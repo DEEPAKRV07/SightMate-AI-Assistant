@@ -1,0 +1,133 @@
+# .github/workflows/ci.yml
+# SightMate-AI-Assistant CI/CD Pipeline
+#
+# Workflows performed:
+#   1. Validates presence of core asset model files (YOLOv8n-INT8, labels).
+#   2. Installs Java 17 (Zulu distribution).
+#   3. Installs Android SDK Command-line Tools.
+#   4. Installs the exact Android NDK (25.1.8937393) and CMake (3.22.1)
+#      required by the CMake native build step.
+#   5. Caches Flutter SDK, Gradle dependencies, and Pub package cache.
+#   6. Installs pub dependencies and runs static analysis.
+#   7. Compiles the debug APK.
+#   8. Uploads the build output as a GitHub runner artifact.
+
+name: SightMate CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    name: Build & Verify Android App
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout Source Code ─────────────────────────────────────────────
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # ── 2. Validate Project Asset Dependencies ──────────────────────────────
+      # Ensure large model assets are committed or fail early with guidance.
+      - name: Validate Model and Asset Dependencies
+        run: |
+          echo "=========================================================="
+          echo "Checking for required ML model files..."
+          echo "=========================================================="
+          
+          MISSING=0
+          
+          if [ ! -f "assets/models/yolov8n_320_int8.tflite" ]; then
+            echo "::error::[MISSING ASSET] assets/models/yolov8n_320_int8.tflite is missing."
+            echo "Diagnostic: The project requires this YOLOv8n INT8 quantized model for Module 1 object detection."
+            echo "Resolution: Download 'yolov8n_320_int8.tflite' and place it in the 'assets/models/' folder."
+            MISSING=1
+          fi
+
+          if [ ! -f "assets/models/labels.txt" ]; then
+            echo "::error::[MISSING ASSET] assets/models/labels.txt is missing."
+            echo "Diagnostic: This file contains the list of classes recognized by YOLOv8n."
+            echo "Resolution: Ensure 'labels.txt' is created or committed inside 'assets/models/'."
+            MISSING=1
+          fi
+
+          if [ $MISSING -eq 1 ]; then
+            echo "Build terminated: Required asset files are missing from the repository."
+            exit 1
+          fi
+          
+          echo "All required models and metadata labels are present."
+
+      # ── 3. Configure Java Environment ───────────────────────────────────────
+      # Java 17 is required by kotlin-android and Gradle packaging plugins.
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # ── 4. Configure Android SDK & NDK ──────────────────────────────────────
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      # Install exact CMake and NDK versions specified in build.gradle.kts
+      - name: Install Android NDK and CMake
+        run: |
+          echo "=========================================================="
+          echo "Installing NDK (25.1.8937393) & CMake (3.22.1)..."
+          echo "=========================================================="
+          
+          # Accept licenses and install native compilation tools via sdkmanager
+          yes | sdkmanager --licenses
+          sdkmanager --install "ndk;25.1.8937393" "cmake;3.22.1"
+          
+          echo "NDK and CMake installations complete."
+
+      # ── 5. Set up Flutter Environment ───────────────────────────────────────
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+          cache-path: "${{ runner.tool_cache }}/flutter"
+
+      # ── 6. Cache Pub Cache Dependencies ─────────────────────────────────────
+      - name: Cache Dart Pub Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-cache-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-cache-
+
+      # ── 7. Restore Gradle Dependencies ──────────────────────────────────────
+      # Automatically caches wrapper, dependencies, and configuration steps.
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-disabled: false
+
+      # ── 8. Install Project Dependencies ─────────────────────────────────────
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      # ── 9. Run Static Analysis ──────────────────────────────────────────────
+      - name: Run Flutter Analyze
+        run: flutter analyze
+
+      # ── 10. Build Debug Application ──────────────────────────────────────────
+      # Compiles Flutter Dart and triggers native CMake C++ compilation.
+      - name: Build Debug Android APK
+        run: flutter build apk --debug
+
+      # ── 11. Upload Compiled APK Artifact ────────────────────────────────────
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SightMate-Debug-APK
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error

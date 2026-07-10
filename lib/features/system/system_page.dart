@@ -15,8 +15,9 @@ class SystemPage extends StatefulWidget {
 
 class _SystemPageState extends State<SystemPage> {
 
-  final BatteryService _battery = BatteryService();
+  final BatteryService _battery  = BatteryService();
   final LocationService _location = LocationService();
+  final _tts = TTSService(); // Singleton — pacing TTS
 
   bool _busy = false;
 
@@ -26,9 +27,9 @@ class _SystemPageState extends State<SystemPage> {
 
     try {
       final level = await _battery.getBatteryLevel();
-      await TTSService.speak("Battery level is $level percent");
+      await _tts.speak('Battery level is $level percent');
     } catch (e) {
-      await TTSService.speak("Unable to get battery information");
+      await _tts.speak('Unable to get battery information');
     }
 
     _busy = false;
@@ -40,7 +41,7 @@ class _SystemPageState extends State<SystemPage> {
 
     final now = DateTime.now();
     final formatted = DateFormat('hh:mm a').format(now);
-    await TTSService.speak("Current time is $formatted");
+    await _tts.speak('Current time is $formatted');
 
     _busy = false;
   }
@@ -51,7 +52,7 @@ class _SystemPageState extends State<SystemPage> {
 
     final now = DateTime.now();
     final formatted = DateFormat('EEEE, MMMM d, yyyy').format(now);
-    await TTSService.speak("Today is $formatted");
+    await _tts.speak('Today is $formatted');
 
     _busy = false;
   }
@@ -65,7 +66,7 @@ class _SystemPageState extends State<SystemPage> {
       await Geolocator.isLocationServiceEnabled();
 
       if (!serviceEnabled) {
-        await TTSService.speak("Location service is disabled");
+        await _tts.speak('Location service is disabled');
         _busy = false;
         return;
       }
@@ -79,8 +80,7 @@ class _SystemPageState extends State<SystemPage> {
       }
 
       if (permission == LocationPermission.deniedForever) {
-        await TTSService.speak(
-            "Location permission permanently denied");
+        await _tts.speak('Location permission permanently denied');
         _busy = false;
         return;
       }
@@ -95,9 +95,9 @@ class _SystemPageState extends State<SystemPage> {
           position.latitude,
           position.longitude);
 
-      await TTSService.speak("You are at $address");
+      await _tts.speak('You are at $address');
     } catch (e) {
-      await TTSService.speak("Unable to get location");
+      await _tts.speak('Unable to get location');
     }
 
     _busy = false;

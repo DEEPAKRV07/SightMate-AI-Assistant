@@ -1,51 +1,97 @@
+// lib/features/object_detection/overlay_painter.dart
+// Detection overlay: draws bounding boxes scaled from normalized [0,1] to screen
+
 import 'package:flutter/material.dart';
 import 'yolo_service.dart';
+import 'h_splitter.dart';
 
 class OverlayPainter extends CustomPainter {
-  final List<DetectionResult> results;
+  final List<DetectionResult> detections;
+  final double frameWidth;
+  final double frameHeight;
+  final Offset? vanishingPoint;
 
-  OverlayPainter(this.results);
+  const OverlayPainter({
+    required this.detections,
+    required this.frameWidth,
+    required this.frameHeight,
+    this.vanishingPoint,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final boxPaint = Paint()
-      ..color = Colors.green
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final textPainter = TextPainter(
-      textDirection: TextDirection.ltr,
+    // Re-classify zones for coloring
+    final zoned = HSplitter.classify(
+      detections:  detections,
+      frameWidth:  frameWidth,
+      frameHeight: frameHeight,
+      vanishingPoint: vanishingPoint,
     );
 
-    for (var r in results) {
-      final left = r.rect.left * size.width;
-      final top = r.rect.top * size.height;
-      final right = r.rect.right * size.width;
-      final bottom = r.rect.bottom * size.height;
+    for (final zd in zoned) {
+      _drawBox(canvas, size, zd);
+    }
+  }
 
-      final rect = Rect.fromLTRB(left, top, right, bottom);
+  void _drawBox(Canvas canvas, Size size, ZonedDetection zd) {
+    final det  = zd.detection;
+    final rect = det.rect; // Normalized [0,1]
 
-      canvas.drawRect(rect, boxPaint);
+    // Scale to screen pixels
+    final screenRect = Rect.fromLTRB(
+      rect.left   * size.width,
+      rect.top    * size.height,
+      rect.right  * size.width,
+      rect.bottom * size.height,
+    );
 
-      final textSpan = TextSpan(
-        text: "${r.label} ${(r.confidence * 100).toStringAsFixed(0)}%",
-        style: const TextStyle(
-          color: Colors.green,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
+    // Zone-based color coding
+    final color = _zoneColor(zd.zone, zd.shouldAlert);
+
+    final boxPaint = Paint()
+      ..color       = color
+      ..style       = PaintingStyle.stroke
+      ..strokeWidth = zd.shouldAlert ? 2.5 : 1.5;
+
+    canvas.drawRect(screenRect, boxPaint);
+
+    // Label background
+    final label = '${det.label} ${(det.confidence * 100).toStringAsFixed(0)}%';
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: zd.shouldAlert ? FontWeight.bold : FontWeight.normal,
+          shadows: const [Shadow(color: Colors.black, blurRadius: 3)],
         ),
-      );
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: screenRect.width);
 
-      textPainter.text = textSpan;
-      textPainter.layout();
+    final bgRect = Rect.fromLTWH(
+      screenRect.left,
+      screenRect.top - 16,
+      textPainter.width + 4,
+      16,
+    );
 
-      textPainter.paint(
-        canvas,
-        Offset(left, top - 18),
-      );
+    canvas.drawRect(bgRect, Paint()..color = color.withOpacity(0.7));
+    textPainter.paint(canvas, Offset(screenRect.left + 2, screenRect.top - 15));
+  }
+
+  Color _zoneColor(SpatialZone zone, bool alert) {
+    if (!alert) return Colors.white38;
+    switch (zone) {
+      case SpatialZone.centralPath: return Colors.redAccent;
+      case SpatialZone.leftFlank:   return Colors.orangeAccent;
+      case SpatialZone.rightFlank:  return Colors.orangeAccent;
+      case SpatialZone.irrelevant:  return Colors.white30;
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant OverlayPainter old) =>
+      old.detections != detections;
 }

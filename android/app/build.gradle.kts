@@ -1,14 +1,24 @@
+// android/app/build.gradle.kts
+// Updated build configuration for SightMate refactoring
+//
+// Changes from baseline:
+//   • NDK version pinned to 25.1.8937393 (stable with OpenCV4Android)
+//   • externalNativeBuild: CMakeLists.txt wired in (builds sightmate_cv.so)
+//   • ONNX Runtime: onnxruntime-android added as dependency
+//   • abiFilters: arm64-v8a primary, armeabi-v7a secondary (drop x86 for APK size)
+//   • minSdk: 24 (NNAPI requires API 27+; 24 allows graceful fallback)
+//   • proguard: disabled for debug; ONNX keep rules in release
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
-    namespace = "com.sightmate.blindassist"
+    namespace  = "com.sightmate.blindassist"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "25.1.8937393"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -20,25 +30,76 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.sightmate.blindassist"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        minSdk        = 24
+        targetSdk     = flutter.targetSdkVersion
+        versionCode   = flutter.versionCode
+        versionName   = flutter.versionName
+
+        // NDK ABI filters: arm64-v8a is modern Android (2017+); armeabi-v7a for older devices
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
+
+        // TFLite and ONNX Runtime require this for large model files
+        multiDexEnabled = true
     }
 
+    // ── NDK / C++ build ────────────────────────────────────────────────────────
+    externalNativeBuild {
+        cmake {
+            path    = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
+    // ── Build types ────────────────────────────────────────────────────────────
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled   = false
+            isShrinkResources = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        debug {
+            isDebuggable    = true
+            isMinifyEnabled = false
+        }
+    }
+
+    // ── Packaging: strip duplicate native libs ─────────────────────────────────
+    packaging {
+        jniLibs {
+            keepDebugSymbols += listOf("**/libsightmate_cv.so")
+        }
+        resources {
+            excludes += listOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/NOTICE",
+                "**/libc++_shared.so",   // Use Android's built-in libc++
+            )
         }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // ── ONNX Runtime for PaddleOCR ─────────────────────────────────────────────
+    // Version 1.16+ supports NNAPI execution provider
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.17.3")
+
+    // ── ML Kit (OCR fallback) ──────────────────────────────────────────────────
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+
+    // ── Kotlin coroutines (used by MLKitOcrHelper) ─────────────────────────────
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // ── Core Kotlin ────────────────────────────────────────────────────────────
+    implementation("androidx.core:core-ktx:1.13.1")
 }

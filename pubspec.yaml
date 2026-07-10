@@ -1,59 +1,69 @@
 name: sightmate
 description: "SightMate – AI Assistant for the Visually Impaired"
 publish_to: 'none'
-
-version: 1.0.0+1
+version: 2.0.0+2
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=3.3.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
+  # ── UI & Core ───────────────────────────────────────────────────────────────
   cupertino_icons: ^1.0.8
-  flutter_tts: ^3.8.5
-  speech_to_text: ^7.3.0
-  permission_handler: ^11.3.1
-  intl: ^0.19.0
-  battery_plus: ^7.0.0
+
+  # ── Camera: startImageStream for 30 FPS pipeline ────────────────────────────
   camera: ^0.10.5+9
+
+  # ── TFLite: YOLOv8n INT8 inference (retained, no migration) ─────────────────
   tflite_flutter: ^0.12.1
+
+  # ── Image processing (YUV→RGB, resize, crop) ────────────────────────────────
   image: ^4.1.7
+
+  # ── TTS: human-like pacing engine ───────────────────────────────────────────
+  flutter_tts: ^3.8.5
+
+  # ── STT: voice command input ──────────────────────────────────────────────────
+  speech_to_text: ^7.3.0
+
+  # ── OCR: MLKit fallback (primary is native PaddleOCR via ONNX) ──────────────
+  google_mlkit_text_recognition: ^0.15.1
+
+  # ── Translation ───────────────────────────────────────────────────────────────
+  google_mlkit_translation: ^0.13.1
+
+  # ── Permissions ───────────────────────────────────────────────────────────────
+  permission_handler: ^11.3.1
+
+  # ── Audio feedback ────────────────────────────────────────────────────────────
   audioplayers: ^5.2.1
+
+  # ── System utilities ──────────────────────────────────────────────────────────
+  battery_plus: ^7.0.0
   geolocator: ^10.1.0
   geocoding: ^2.1.1
-
-  google_mlkit_text_recognition: ^0.15.1
-  google_mlkit_translation: ^0.13.1
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
-  flutter_launcher_icons: ^0.14.4
-  flutter_native_splash: ^2.4.0
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
 
   assets:
+    # ── AI Models ──────────────────────────────────────────────────────────────
     - assets/models/yolov8n_320_int8.tflite
-    - assets/models/deeplabv3.tflite
     - assets/models/labels.txt
+    # PaddleOCR ONNX models — add when available:
+    # - assets/models/ch_PP-OCRv4_det_infer.onnx
+    # - assets/models/ch_PP-OCRv4_rec_infer.onnx
+
+    # ── Sounds ─────────────────────────────────────────────────────────────────
     - assets/sounds/beep.mp3
+
+    # ── Icons ──────────────────────────────────────────────────────────────────
     - assets/icons/sightmate_icon.png
-
-
-flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "assets/icons/sightmate_icon.png"
-  adaptive_icon_background: "#e6f7ff"
-  adaptive_icon_foreground: "assets/icons/sightmate_icon.png"
-
-flutter_native_splash:
-  color: "#e6f7ff"
-  image: assets/icons/sightmate_icon.png
-  android: true
-  ios: true

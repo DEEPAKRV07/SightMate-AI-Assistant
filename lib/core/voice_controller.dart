@@ -5,9 +5,10 @@ import 'app_router.dart';
 
 class VoiceController {
   final SpeechService _speech = SpeechService();
+  final _tts = TTSService(); // Singleton instance
 
   Future<void> listenAndRoute(BuildContext context) async {
-    await TTSService.speak("Listening");
+    await _tts.speak('Listening');
 
     String? command = await _speech.listenOnce();
 
@@ -16,21 +17,20 @@ class VoiceController {
     }
     command = command.toLowerCase();
 
-    if (command.contains("object")) {
+    if (command.contains('object') || command.contains('detect')) {
       AppRouter.goToObjectDetection(context);
-    } else if (command.contains("read") || command.contains("text")) {
+    } else if (command.contains('read') || command.contains('text') || command.contains('scan')) {
       AppRouter.goToOCR(context);
-    } else if (command.contains("translate") ||
-        command.contains("translation")) {
+    } else if (command.contains('translate') || command.contains('translation')) {
       AppRouter.goToTranslation(context);
-    } else if (command.contains("navigation")) {
+    } else if (command.contains('navigation') || command.contains('navigate')) {
       AppRouter.goToNavigation(context);
-    } else if (command.contains("system")) {
+    } else if (command.contains('system') || command.contains('battery')) {
       AppRouter.goToSystem(context);
-    } else if (command.contains("braille keyboard")) {
+    } else if (command.contains('braille') || command.contains('keyboard')) {
       AppRouter.goToBraille(context);
     } else {
-      await TTSService.speak("Command not recognized");
+      await _tts.speak('Command not recognized. Say: object, read, navigate, translate, or braille.');
     }
   }
 }

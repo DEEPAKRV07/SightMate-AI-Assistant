@@ -23,7 +23,7 @@ class AppRouter {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const OCRPage(),
+        builder: (_) => const OcrPage(),
       ),
     );
   }
