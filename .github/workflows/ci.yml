@@ -166,7 +166,23 @@ jobs:
       # ── 10. Build Debug Application ──────────────────────────────────────────
       # Compiles Flutter Dart and triggers native CMake C++ compilation.
       - name: Build Debug Android APK
-        run: flutter build apk --debug --verbose
+        run: flutter build apk --debug --verbose 2>&1 | tee build_log.txt
+
+      - name: Parse and Annotate Build Errors
+        if: failure()
+        run: |
+          if [ -f build_log.txt ]; then
+            echo "=========================================================="
+            echo "Printing last 100 lines of build log..."
+            echo "=========================================================="
+            tail -n 100 build_log.txt
+            echo "=========================================================="
+            echo "Generating error annotations..."
+            echo "=========================================================="
+            grep -i -E "error|failed|exception" build_log.txt | head -n 30 | while read -r line; do
+              echo "::error::$line"
+            done
+          fi
 
       # ── 11. Upload Compiled APK Artifact ────────────────────────────────────
       - name: Upload Debug APK Artifact
