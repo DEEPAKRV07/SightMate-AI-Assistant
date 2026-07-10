@@ -199,10 +199,43 @@ jobs:
           if [ -n "$apk_path" ]; then
             echo "::notice::Successfully compiled APK at $apk_path"
           else
-            echo "::error::No APK file found! Printing last 150 lines of build log..."
-            tail -n 150 build_log.txt | while read -r line; do
-              echo "::warning::$line"
-            done
+            echo "::error::No APK file found! Running diagnostics parser..."
+            
+            python3 -c "
+            import re
+            try:
+                with open('build_log.txt', 'r', encoding='utf-8', errors='ignore') as f:
+                    log = f.read()
+                
+                # Check for compiler errors (Java, Kotlin, C++)
+                compiler_errors = re.findall(r'(?:[a-zA-Z0-9_./+-]+:\d+:\d+: error:.*|e: .*|error:.*)', log)
+                if compiler_errors:
+                    print('::error::--- COMPILER ERRORS ---')
+                    for err in compiler_errors[:30]:
+                        print(f'::error::{err}')
+                
+                # Check for Gradle what went wrong section
+                what_went_wrong = re.findall(r'\* What went wrong:\n(.*?)(?=\n\* Try:|\Z)', log, re.DOTALL)
+                if what_went_wrong:
+                    print('::error::--- WHAT WENT WRONG ---')
+                    for line in what_went_wrong[0].strip().splitlines():
+                        print(f'::error::{line}')
+                
+                # Check for Caused by exception lines
+                caused_by = re.findall(r'Caused by:.*', log)
+                if caused_by:
+                    print('::error::--- CAUSED BY ---')
+                    for cb in caused_by[:15]:
+                        print(f'::error::{cb}')
+                        
+                if not compiler_errors and not what_went_wrong and not caused_by:
+                    print('::warning::Could not find specific compiler/Gradle error markers. Printing last 200 lines:')
+                    lines = log.splitlines()
+                    for line in lines[-200:]:
+                        print(f'::warning::{line}')
+            except Exception as e:
+                print(f'::error::Error parsing log: {e}')
+            "
             exit 1
           fi
 
