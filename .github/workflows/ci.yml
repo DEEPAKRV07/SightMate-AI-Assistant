@@ -205,7 +205,10 @@ jobs:
           echo "=========================================================="
           echo "Locating compiled APK files..."
           echo "=========================================================="
-          find . -name "*.apk" -print
+          find . -name "*.apk" | while read -r apk_path; do
+            echo "Found APK: $apk_path"
+            echo "::warning::Found APK at $apk_path"
+          done
           echo "=========================================================="
 
       # ── 11. Upload Compiled APK Artifact ────────────────────────────────────
