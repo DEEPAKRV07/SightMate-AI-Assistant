@@ -200,14 +200,8 @@ jobs:
             echo "::notice::Successfully compiled APK at $apk_path"
           else
             echo "::error::No APK file found! Printing last 150 lines of build log..."
-            tail -n 150 build_log.txt
-            
-            # Print annotations for error lines to make them queryable via API
-            echo "=========================================================="
-            echo "Generating error annotations..."
-            echo "=========================================================="
-            grep -i -E "error|failed|exception" build_log.txt | head -n 30 | while read -r line; do
-              echo "::error::$line"
+            tail -n 150 build_log.txt | while read -r line; do
+              echo "::warning::$line"
             done
             exit 1
           fi
