@@ -201,9 +201,14 @@ jobs:
           else
             echo "::error::No APK file found! Running diagnostics parser..."
             
+            echo "Running Gradle directly to get full debug logs..."
+            cd android
+            ./gradlew assembleDebug --stacktrace --info > ../gradle_debug.txt 2>&1 || true
+            cd ..
+            
             # Post log to a public pastebin to bypass annotation truncations
-            URL=$(curl -s --data-binary @build_log.txt https://paste.rs/)
-            echo "::error::Build log uploaded to: $URL"
+            URL=$(curl -s --data-binary @gradle_debug.txt https://paste.rs/)
+            echo "::error::Gradle debug log uploaded to: $URL"
             echo "Log URL: $URL"
             
             python3 -c "
