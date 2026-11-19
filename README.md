@@ -1,5 +1,11 @@
 # SightMate – AI Assistant for the Visually Impaired
 
+![Flutter](https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?style=flat-square&logo=dart&logoColor=white)
+![TensorFlow Lite](https://img.shields.io/badge/TensorFlow%20Lite-FF6F00?style=flat-square&logo=tensorflow&logoColor=white)
+![YOLOv8](https://img.shields.io/badge/YOLOv8-Computer%20Vision-00A67E?style=flat-square)
+![Android](https://img.shields.io/badge/Android-3DDC84?style=flat-square&logo=android&logoColor=white)
+
 SightMate is an AI-powered mobile assistant designed to help visually impaired users navigate and interact with their surroundings using real-time computer vision and voice feedback.
 
 ---
@@ -74,7 +80,13 @@ lib/
 
 ---
 
-## 👨‍💻 Author
+## Accessibility and limitations
+
+SightMate is an assistive technology prototype, not a replacement for a white cane, guide dog, or professional mobility training. Detection and navigation guidance can be affected by lighting, camera positioning, obstacles, and model limitations.
+
+---
+
+## 👨‍💻 Authors
 
 Deepak R.V  
 Gowtham S  
